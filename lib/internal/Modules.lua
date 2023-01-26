@@ -1,4 +1,4 @@
-type ModuleDictionary = { string: ModuleScript }
+export type ModuleDictionary = { string: ModuleScript }
 
 local CONFLICTING_MODULE_NAME = "Conflicting module name '$s' found in '$s' and '$s'. "
 	.. "Rename one to avoid conflicts."

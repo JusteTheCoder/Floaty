@@ -5,6 +5,7 @@ local Controllers = require(internal.Controllers)
 local Modules = require(internal.Modules)
 local Packages = require(internal.Packages)
 
+
 local ADD_AFTER_START_ERROR = "Cannot add new %s after Matte has started."
 
 local Matte = {}
@@ -20,9 +21,9 @@ function Matte.addControllers(location: Instance)
     Modules.getModulesRecursive(location, controllers)
 end
 
-function Matte.addLibraries()
+function Matte.addLibraries(location: Instance)
     assert(not start, ADD_AFTER_START_ERROR:format("Libraries"))
-    Modules.getModulesRecursive(script, libraries)
+    Modules.getModulesRecursive(location, libraries)
 end
 
 table.freeze(Matte)
