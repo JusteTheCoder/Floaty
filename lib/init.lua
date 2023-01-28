@@ -1,30 +1,59 @@
-local internal = script.internal
-local util = script.util
+local Coordinators = require(script.Coordinators)
+local Packages = require(script.Packages)
+local Modules = require(script.Modules)
 
-local Controllers = require(internal.Controllers)
-local Modules = require(internal.Modules)
-local Packages = require(internal.Packages)
+local Floaty = {
+	Coordinators = Coordinators,
+	Libraries = Packages.new("Libraries"),
+	Packages = Packages.new("Packages"),
+}
 
+local awaiting: { thread } = {}
+local started: boolean = false
+local ready: boolean = false
+local _startData: any? = nil
 
-local ADD_AFTER_START_ERROR = "Cannot add new %s after Matte has started."
-
-local Matte = {}
-
-local start = false
-local ready = false
-
-local controllers = {}
-local libraries = {}
-
-function Matte.addControllers(location: Instance)
-    assert(not start, ADD_AFTER_START_ERROR:format("Controllers"))
-    Modules.getModulesRecursive(location, controllers)
+function Floaty.addCoordinators(location: Instance)
+	assert(not started, "Coordinators cannot be added after Floaty has started. Please add before initiating.")
+	Modules.findDirect(location, Coordinators._coordinators)
 end
 
-function Matte.addLibraries(location: Instance)
-    assert(not start, ADD_AFTER_START_ERROR:format("Libraries"))
-    Modules.getModulesRecursive(location, libraries)
+function Floaty.addLibraries(location: Instance)
+	assert(not started, "Libraries cannot be added after Floaty has started. Please add before initiating.")
+	Modules.findDirect(location, Floaty.Libraries._modules)
 end
 
-table.freeze(Matte)
-return Matte
+function Floaty.getStartData(): any?
+	return _startData
+end
+
+function Floaty.start(startData: any?)
+	assert(not started, "Floaty has already been started.")
+	started = true
+	_startData = startData
+
+	Packages.merge(Floaty.Packages, Floaty.Libraries._modules, Coordinators._coordinators)
+	Coordinators._beginLifeCycle()
+
+	ready = true
+	for _, callback in ipairs(awaiting) do
+		task.defer(callback, startData)
+	end
+end
+
+function Floaty.onStart(callback: (startData: any?) -> ())
+	if ready then
+		return task.spawn(callback, _startData)
+	end
+
+	table.insert(awaiting, callback)
+end
+
+function Floaty.awaitStart(): any?
+	if ready then return _startData end
+	table.insert(awaiting, coroutine.running())
+	return coroutine.yield()
+end
+
+table.freeze(Floaty)
+return Floaty
