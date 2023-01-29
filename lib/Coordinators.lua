@@ -74,6 +74,12 @@ local function _beginLifeCycle()
 	_onLifeCycleCompleted()
 end
 
+--[=[
+	Registers a coordinator.
+	If the coordinator has already been registered, the data will be merged into the existing coordinator.
+	If the coordinator has not been registered, it will be registered with the given data.
+	If no data is given, the coordinator will be registered with an empty table.
+]=]
 local function register(name: string, data: table?): table
 	local coordinator = _registeredCoordinators[name]
 
@@ -90,6 +96,10 @@ local function register(name: string, data: table?): table
 	return coordinator
 end
 
+--[=[
+	Returns a registered coordinator.
+	If the coordinator has not been registered, an empty table will be returned.
+]=]
 local function get(name: string): table?
 	local coordinator = _registeredCoordinators[name]
 	if coordinator then return coordinator end
